@@ -152,6 +152,8 @@ class DiffWaveLearner:
     writer.add_scalar('train/grad_norm', self.grad_norm, step)
     writer.flush()
     self.summary_writer = writer
+    if step == 0: 
+        writer.add_text("params", f"``` Parameters:\n {str(self.params)} ```")
 
 
 def _train_impl(replica_id, model, dataset, args, params):
@@ -170,6 +172,7 @@ def train(args, params):
   else:
     dataset = from_path(args.data_dirs, params)
   model = DiffWave(params).cuda()
+  print(f"Model initialized with {sum([p.numel() for p in model.parameters()]):,d} parameters.")
   _train_impl(0, model, dataset, args, params)
 
 

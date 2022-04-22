@@ -61,7 +61,7 @@ class UnconditionalDataset(torch.utils.data.Dataset):
   def __getitem__(self, idx):
     audio_filename = self.filenames[idx]
     spec_filename = f'{audio_filename}.spec.npy'
-    if torchaudio.__version__ > '0.7.0':
+    if int(torchaudio.__version__.replace('.', '')) > int("0.7.0".replace('.', '')):
         signal, _ = torchaudio.load(audio_filename)
     else:
         signal, _ = torchaudio.load_wav(audio_filename)
@@ -83,8 +83,12 @@ class Collator:
       if self.params.unconditional:
           # Filter out records that aren't long enough.
           if len(record['audio']) < self.params.audio_len:
-            del record['spectrogram']
-            del record['audio']
+            if self.params.unconditional:
+              n_pad = self.params.audio_len - len(record['audio'])
+              record['audio'] = F.pad(record['audio'], (0, n_pad), mode='constant', value=0)
+            else:
+              del record['spectrogram']
+              del record['audio']
             continue
 
           start = random.randint(0, record['audio'].shape[-1] - self.params.audio_len)
