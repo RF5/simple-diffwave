@@ -36,13 +36,10 @@ class ConditionalDataset(torch.utils.data.Dataset):
   def __getitem__(self, idx):
     audio_filename = self.filenames[idx]
     spec_filename = f'{audio_filename}.spec.npy'
-    if torchaudio.__version__ > '0.7.0':
-        signal, _ = torchaudio.load(audio_filename)
-    else:
-        signal, _ = torchaudio.load_wav(audio_filename)
+    signal, _ = torchaudio.load(audio_filename)
     spectrogram = np.load(spec_filename)
     # https://github.com/lmnt-com/diffwave/issues/15
-    out = signal[0] if torchaudio.__version__ > '0.7.0' else signal[0] / 32767.5
+    out = signal.squeeze(0).clamp(-1.0, 1.0)
     return {
         'audio': out,
         'spectrogram': spectrogram.T
@@ -61,17 +58,13 @@ class UnconditionalDataset(torch.utils.data.Dataset):
   def __getitem__(self, idx):
     audio_filename = self.filenames[idx]
     spec_filename = f'{audio_filename}.spec.npy'
-    if int(torchaudio.__version__.replace('.', '')) > int("0.7.0".replace('.', '')):
-        signal, _ = torchaudio.load(audio_filename)
-    else:
-        signal, _ = torchaudio.load_wav(audio_filename)
-    out = signal[0] if torchaudio.__version__ > '0.7.0' else signal[0] / 32767.5
+    signal, _ = torchaudio.load(audio_filename)
+    out = signal.squeeze(0).clamp(-1.0, 1.0)
+
     return {
         'audio': out,
         'spectrogram': None
     }
-
-
 
 class Collator:
   def __init__(self, params):
